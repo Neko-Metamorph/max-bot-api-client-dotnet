@@ -22,7 +22,7 @@ dotnet add package SaaSoft.MAX.Bot
 
 ### Через PackageReference
 ```xml
-<PackageReference Include="SaaSoft.MAX.Bot" Version="1.0.5" />
+<PackageReference Include="SaaSoft.MAX.Bot" Version="1.0.8" />
 ```
 
 ## Быстрый старт
@@ -57,13 +57,13 @@ await botClient.SendMessageAsync(new SendMessageRequest
 var _ = maxApiClient.PollUpdatesWithCallback(
     async (update, client) =>
     {
-        Console.WriteLine($"Сообщение: {update?.Message?.Body?.Text}");
-
-        if (update?.UpdateType == UpdateTypes.MessageCreated)
+        if (update is MessageCreatedUpdate messageCreated)
         {
+            Console.WriteLine($"Сообщение: {messageCreated.Message?.Body?.Text}");
+
             await client.SendMessageAsync(new SendMessageRequest
             {
-                Text = update.Message?.Body?.Text,
+                Text = messageCreated.Message?.Body?.Text,
                 ChatId = -70581633278133,
             });
         }

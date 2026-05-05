@@ -10,7 +10,16 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.2" />
-    <PackageReference Include="SaaSoft.MAX.Bot" Version="1.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\MAX.Bot\MAX.Bot.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Files\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 	
 </Project>

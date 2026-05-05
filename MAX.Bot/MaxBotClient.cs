@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
 using System.Web;
+using System.Net.Http.Headers;
 using MAX.Bot.Exceptions;
 using MAX.Bot.Interfaces;
 using MAX.Bot.Interfaces.Models;
@@ -103,13 +104,16 @@ public class MaxBotClient : IMaxBotClient
 
     public async Task<GetMessagesResponse> GetMessagesAsync(GetMessagesRequest request, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+        request.Validate();
+
         var queryParams = new Dictionary<string, string>();
 
         if (request.ChatId.HasValue)
             queryParams["chat_id"] = request.ChatId.Value.ToString();
 
-        if (request.MessageIds != null)
-            queryParams["message_ids"] = string.Join(",", request.MessageIds!);
+        if (request.MessageIds is { Count: > 0 })
+            queryParams["message_ids"] = string.Join(",", request.MessageIds);
 
         if (request.Count.HasValue)
             queryParams["count"] = request.Count.Value.ToString();
@@ -130,6 +134,21 @@ public class MaxBotClient : IMaxBotClient
     public async Task<Message> GetMessageByIdAsync(string messageId, CancellationToken cancellationToken = default)
     {
         return await SendRequestAsync<Message>(HttpMethod.Get, $"/messages/{messageId}", null, cancellationToken);
+    }
+
+    public async Task<VideoInfoResponse> GetVideoAsync(string videoToken, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(videoToken))
+            throw new ArgumentException("Токен видео-вложения не должен быть пустым.", nameof(videoToken));
+
+        if (!IsVideoTokenValid(videoToken))
+            throw new ArgumentException("Токен видео-вложения может содержать только латинские буквы, цифры, '_' и '-'.", nameof(videoToken));
+
+        return await SendRequestAsync<VideoInfoResponse>(
+            HttpMethod.Get,
+            $"/videos/{Uri.EscapeDataString(videoToken)}",
+            null,
+            cancellationToken);
     }
 
     public async Task<BaseResponse> EditMessageByIdAsync(string messageId, SendMessageRequest messageRequest, CancellationToken cancellationToken = default)
@@ -216,6 +235,26 @@ public class MaxBotClient : IMaxBotClient
         );
     }
 
+    public async Task<string> UploadsAsync(UploadRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        request.Validate();
+
+        var uploadType = request.GetUploadTypeValue();
+        var uploadInfo = await SendRequestAsync<UploadResponse>(
+            HttpMethod.Post,
+            $"/uploads?type={HttpUtility.UrlEncode(uploadType)}",
+            null,
+            cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(uploadInfo.Url))
+            throw new InvalidOperationException("API MAX вернул пустой URL для загрузки файла");
+
+        var uploadUri = CreateUploadUri(uploadInfo.Url);
+        var uploadResponse = await UploadFileAsync(uploadUri, request, cancellationToken);
+        return ResolveUploadToken(request, uploadInfo, uploadResponse);
+    }
+
     public async Task<GetUpdatesResponse> GetUpdatesAsync(
         GetUpdatesRequest request,
         CancellationToken cancellationToken = default)
@@ -242,6 +281,20 @@ public class MaxBotClient : IMaxBotClient
             HttpMethod.Get,
             $"/updates{queryString}",
             null,
+            cancellationToken);
+    }
+
+    public async Task<BaseResponse> SubscribeAsync(
+        SubscriptionRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        request.Validate();
+
+        return await SendRequestAsync<BaseResponse>(
+            HttpMethod.Post,
+            "/subscriptions",
+            request,
             cancellationToken);
     }
 
@@ -283,6 +336,170 @@ public class MaxBotClient : IMaxBotClient
                 Console.WriteLine($"Ошибка: {ex.Message}");
                 await Task.Delay(5000, cancellationToken);
             }
+        }
+    }
+
+    private async Task<UploadResponse> UploadFileAsync(
+        Uri uploadUri,
+        UploadRequest request,
+        CancellationToken cancellationToken)
+    {
+        using var fileContent = new StreamContent(new NonDisposingStream(request.Content!));
+
+        if (!string.IsNullOrWhiteSpace(request.ContentType))
+            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(request.ContentType);
+
+        using var multipartContent = new MultipartFormDataContent();
+        multipartContent.Add(fileContent, "data", request.FileName);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, GlobalCancelToken);
+        var response = await _httpClient.PostAsync(uploadUri, multipartContent, cts.Token);
+        var responseContent = await response.Content.ReadAsStringAsync(cts.Token);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new MaxBotClientException(
+                $"HTTP {response.StatusCode}: {responseContent}",
+                response.StatusCode);
+        }
+
+        if (string.IsNullOrWhiteSpace(responseContent))
+            return new UploadResponse();
+
+        if (!IsJsonResponse(responseContent))
+        {
+            if (request.Type is UploadType.Video or UploadType.Audio)
+                return new UploadResponse();
+
+            throw new InvalidOperationException(
+                $"API MAX вернул не JSON-ответ после загрузки файла: {CreateResponsePreview(responseContent)}");
+        }
+
+        return JsonSerializer.Deserialize<UploadResponse>(responseContent, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        }) ?? throw new InvalidOperationException("Не удалось десериализовать ответ загрузки файла");
+    }
+
+    private static Uri CreateUploadUri(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uploadUri) ||
+            (uploadUri.Scheme != Uri.UriSchemeHttps && uploadUri.Scheme != Uri.UriSchemeHttp))
+        {
+            throw new InvalidOperationException("API MAX вернул некорректный URL для загрузки файла");
+        }
+
+        return uploadUri;
+    }
+
+    private static string ResolveUploadToken(
+        UploadRequest request,
+        UploadResponse uploadInfo,
+        UploadResponse uploadResponse)
+    {
+        var token = request.Type switch
+        {
+            UploadType.Video or UploadType.Audio => uploadInfo.Token ?? uploadResponse.Token,
+            UploadType.Image or UploadType.File => uploadResponse.Token ?? uploadInfo.Token,
+            _ => null
+        };
+
+        if (!string.IsNullOrWhiteSpace(token))
+            return token;
+
+        var expectedStep = request.Type is UploadType.Video or UploadType.Audio
+            ? "первого шага загрузки video/audio"
+            : "ответа загрузки image/file";
+
+        throw new InvalidOperationException($"API MAX не вернул token из {expectedStep}.");
+    }
+
+    private static bool IsJsonResponse(string responseContent)
+    {
+        var trimmed = responseContent.TrimStart();
+        return trimmed.StartsWith('{') || trimmed.StartsWith('[');
+    }
+
+    private static bool IsVideoTokenValid(string videoToken)
+    {
+        return videoToken.All(c => char.IsAsciiLetterOrDigit(c) || c is '_' or '-');
+    }
+
+    private static string CreateResponsePreview(string responseContent)
+    {
+        const int maxLength = 200;
+
+        var normalized = responseContent
+            .Replace("\r", string.Empty)
+            .Replace("\n", " ");
+
+        return normalized.Length <= maxLength
+            ? normalized
+            : normalized[..maxLength] + "...";
+    }
+
+    private sealed class NonDisposingStream : Stream
+    {
+        private readonly Stream _inner;
+
+        public NonDisposingStream(Stream inner)
+        {
+            _inner = inner;
+        }
+
+        public override bool CanRead => _inner.CanRead;
+        public override bool CanSeek => _inner.CanSeek;
+        public override bool CanWrite => _inner.CanWrite;
+        public override long Length => _inner.Length;
+
+        public override long Position
+        {
+            get => _inner.Position;
+            set => _inner.Position = value;
+        }
+
+        public override void Flush()
+        {
+            _inner.Flush();
+        }
+
+        public override Task FlushAsync(CancellationToken cancellationToken)
+        {
+            return _inner.FlushAsync(cancellationToken);
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            return _inner.Read(buffer, offset, count);
+        }
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            return _inner.ReadAsync(buffer, cancellationToken);
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            return _inner.Seek(offset, origin);
+        }
+
+        public override void SetLength(long value)
+        {
+            _inner.SetLength(value);
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            _inner.Write(buffer, offset, count);
+        }
+
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            return _inner.WriteAsync(buffer, cancellationToken);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
         }
     }
 }

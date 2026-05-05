@@ -19,7 +19,7 @@ public record GetMessagesRequest
     /// Обязательный параметр, если не указан chat_id
     /// </summary>
     [JsonPropertyName("message_ids")]
-    public List<long>? MessageIds { get; set; }
+    public List<string>? MessageIds { get; set; }
 
     /// <summary>
     /// Время начала для запрашиваемых сообщений (в формате Unix timestamp)
@@ -37,6 +37,27 @@ public record GetMessagesRequest
     /// По умолчанию: 50 
     /// Максимальное количество сообщений в ответе
     /// </summary>
-    [JsonPropertyName("сount")]
+    [JsonPropertyName("count")]
     public int? Count { get; set; }
+
+    /// <summary>
+    /// Проверить параметры запроса сообщений
+    /// </summary>
+    public void Validate()
+    {
+        var hasChatId = ChatId.HasValue;
+        var hasMessageIds = MessageIds is { Count: > 0 };
+
+        if (hasChatId == hasMessageIds)
+            throw new ArgumentException("Нужно указать ровно один параметр: chat_id или message_ids.");
+
+        if (MessageIds != null && MessageIds.Any(string.IsNullOrWhiteSpace))
+            throw new ArgumentException("message_ids не должен содержать пустые идентификаторы.", nameof(MessageIds));
+
+        if (Count is < 1 or > 100)
+            throw new ArgumentOutOfRangeException(nameof(Count), Count, "count должен быть в диапазоне от 1 до 100.");
+
+        if (From.HasValue && To.HasValue && From.Value > To.Value)
+            throw new ArgumentException("from не должен быть больше to.");
+    }
 }

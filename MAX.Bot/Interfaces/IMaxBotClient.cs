@@ -34,6 +34,14 @@ public interface IMaxBotClient
     Task<GetUpdatesResponse> GetUpdatesAsync(GetUpdatesRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Подписаться на обновления о новых событиях через Webhook
+    /// </summary>
+    /// <param name="request">Запрос на настройку подписки Webhook</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Базовый ответ операции</returns>
+    Task<BaseResponse> SubscribeAsync(SubscriptionRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Получить сообщения из чата
     /// </summary>
     /// <param name="request">Запрос на получение сообщений</param>
@@ -48,6 +56,14 @@ public interface IMaxBotClient
     /// <param name="cancellationToken">Токен отмены операции</param>
     /// <returns>Сообщение</returns>
     Task<Message> GetMessageByIdAsync(string messageId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Получить информацию о видео по токену вложения
+    /// </summary>
+    /// <param name="videoToken">Токен видео-вложения</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Информация о видео</returns>
+    Task<VideoInfoResponse> GetVideoAsync(string videoToken, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Отредактировать(изменить) сообщение по идентификатору
@@ -97,6 +113,15 @@ public interface IMaxBotClient
     /// <param name="cancellationToken">Токен отмены операции</param>
     /// <returns>Базовый ответ операции</returns>
     Task<BaseResponse> AddChatMemberAsync(AddChatMemberRequest request, CancellationToken cancellationToken = default);
+
+
+    /// <summary>
+    /// Загрузить файл и получить токен вложения
+    /// </summary>
+    /// <param name="request">Запрос на загрузку файла</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Токен загруженного файла</returns>
+    Task<string> UploadsAsync(UploadRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Долгосрочный опрос обновлений с обработкой через callback-функцию

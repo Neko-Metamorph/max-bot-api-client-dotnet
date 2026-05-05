@@ -22,7 +22,7 @@ dotnet add package SaaSoft.MAX.Bot
 
 ### Через PackageReference
 ```xml
-<PackageReference Include="SaaSoft.MAX.Bot" Version="1.0.7" />
+<PackageReference Include="SaaSoft.MAX.Bot" Version="1.0.8" />
 ```
 
 ## Быстрый старт
@@ -57,13 +57,13 @@ await botClient.SendMessageAsync(new SendMessageRequest
 var _ = maxApiClient.PollUpdatesWithCallback(
     async (update, client) =>
     {
-        Console.WriteLine($"Сообщение: {update?.Message?.Body?.Text}");
-
-        if (update?.UpdateType == UpdateTypes.MessageCreated)
+        if (update is MessageCreatedUpdate messageCreated)
         {
+            Console.WriteLine($"Сообщение: {messageCreated.Message?.Body?.Text}");
+
             await client.SendMessageAsync(new SendMessageRequest
             {
-                Text = update.Message?.Body?.Text,
+                Text = messageCreated.Message?.Body?.Text,
                 ChatId = -70581633278133,
             });
         }
@@ -140,7 +140,7 @@ public class BotService
 | PUT | Редактировать сообщение | `PUT/messages` | ✅ |
 | DEL | Удалить сообщение | `DELETE/messages` | ✅ |
 | GET | Получить сообщение | `GET/messages/-messageId-` | ✅ |
-| GET | Получить информацию о видео | `GET/videos/-videoToken-` | ❌ |
+| GET | Получить информацию о видео | `GET/videos/-videoToken-` | ✅ |
 | POST | Ответ на callback | `POST/answers` | ❌ |
 
 
@@ -161,7 +161,7 @@ public class BotService
 | GET | Получение списка администраторов группового чата | `GET/chats/-chatId-/members/admins` | ❌ |
 | POST | Назначить администратора группового чата | `POST/chats/-chatId-/members/admins` | ❌ |
 | DEL | Отменить права администратора в групповом чате | `DELETE/chats/-chatId-/members/admins/-userId-` | ❌ |
-| GET | Получение участников группового чата | `GET/chats/-chatId-/members` | 🚧 |
+| GET | Получение участников группового чата | `GET/chats/-chatId-/members` | ✅ |
 | POST | Добавление участников в групповой чат | `POST/chats/-chatId-/members` | ✅ |
 | DEL | Удаление участника из группового чата | `DELETE/chats/-chatId-/members` | ✅ |
 
@@ -170,7 +170,7 @@ public class BotService
 | Метод | Описание | Ссылка | Статус |
 |-------|----------|--------|--------|
 | GET | Получение подписок | `GET/subscriptions` | ❌ |
-| POST | Подписка на обновления | `POST/subscriptions` | ❌ |
+| POST | Подписка на обновления | `POST/subscriptions` | ✅ |
 | DEL | Отписка от обновлений | `DELETE/subscriptions` | ❌ |
 | GET | Получение обновлений | `GET/updates` | ✅ |
 
@@ -178,4 +178,4 @@ public class BotService
 
 | Метод | Описание | Ссылка | Статус |
 |-------|----------|--------|--------|
-| POST | Загрузка файлов | `POST/uploads` | ❌ |
+| POST | Загрузка файлов | `POST/uploads` | ✅ |
