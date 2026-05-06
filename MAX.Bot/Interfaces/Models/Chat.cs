@@ -96,6 +96,12 @@ public record Chat
     public User? DialogWithUser { get; set; }
 
     /// <summary>
+    /// Количество сообщений в групповых чатах и каналах
+    /// </summary>
+    [JsonPropertyName("messages_count")]
+    public int? MessagesCount { get; set; }
+
+    /// <summary>
     /// ID сообщения, содержащего кнопку, через которую был инициирован чат
     /// </summary>
     [JsonPropertyName("chat_message_id")]

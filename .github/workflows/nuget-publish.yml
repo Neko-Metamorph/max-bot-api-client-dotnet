@@ -81,7 +81,6 @@ jobs:
         dotnet nuget push "$PACKAGE_FILE" \
           --source "https://api.nuget.org/v3/index.json" \
           --api-key "$NUGET_KEY" \
-          --skip-duplicate \
           --timeout 300
         
         if [ $? -eq 0 ]; then
@@ -100,7 +99,7 @@ jobs:
       if: success()
       with:
         name: Release ${{ github.ref_name }}
-        tag_name: ${{ github.ref_name }}
+        tag_name: ${{ needs.build-and-pack.outputs.package_version }}
         generate_release_notes: true
         files: |
           *.nupkg

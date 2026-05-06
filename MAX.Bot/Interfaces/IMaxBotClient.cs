@@ -26,6 +26,14 @@ public interface IMaxBotClient
     Task<SendMessageResponse> SendMessageAsync(SendMessageRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Ответить на callback после нажатия пользователем кнопки
+    /// </summary>
+    /// <param name="request">Запрос на ответ callback</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Базовый ответ операции</returns>
+    Task<BaseResponse> AnswerCallbackAsync(AnswerCallbackRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Получить обновления (события)
     /// </summary>
     /// <param name="request">Запрос на получение обновлений</param>
@@ -34,12 +42,27 @@ public interface IMaxBotClient
     Task<GetUpdatesResponse> GetUpdatesAsync(GetUpdatesRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Получить все подписки через Webhook
+    /// </summary>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Ответ со списком текущих подписок</returns>
+    Task<GetSubscriptionsResponse> GetSubscriptionsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Подписаться на обновления о новых событиях через Webhook
     /// </summary>
     /// <param name="request">Запрос на настройку подписки Webhook</param>
     /// <param name="cancellationToken">Токен отмены операции</param>
     /// <returns>Базовый ответ операции</returns>
     Task<BaseResponse> SubscribeAsync(SubscriptionRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Отписаться от обновлений о новых событиях через Webhook
+    /// </summary>
+    /// <param name="request">Запрос на удаление подписки Webhook</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Базовый ответ операции</returns>
+    Task<BaseResponse> UnsubscribeAsync(DeleteSubscriptionRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Получить сообщения из чата
@@ -89,6 +112,107 @@ public interface IMaxBotClient
     /// <param name="cancellationToken">Токен отмены операции</param>
     /// <returns>Ответ со списком чатов</returns>
     Task<GetChatsResponse> GetChatsAsync(GetChatsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Получить информацию о групповом чате по идентификатору
+    /// </summary>
+    /// <param name="chatId">Идентификатор запрашиваемого чата</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Информация о чате</returns>
+    Task<Chat> GetChatByIdAsync(long chatId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Изменить информацию о групповом чате
+    /// </summary>
+    /// <param name="chatId">Идентификатор изменяемого чата</param>
+    /// <param name="request">Запрос на изменение информации о чате</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Информация о чате после изменения</returns>
+    Task<Chat> UpdateChatAsync(long chatId, UpdateChatRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Удалить групповой чат для всех участников
+    /// </summary>
+    /// <param name="chatId">Идентификатор удаляемого чата</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Базовый ответ операции</returns>
+    Task<BaseResponse> DeleteChatAsync(long chatId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Отправить действие бота в групповой чат
+    /// </summary>
+    /// <param name="chatId">Идентификатор чата</param>
+    /// <param name="request">Запрос на отправку действия бота</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Базовый ответ операции</returns>
+    Task<BaseResponse> SendChatActionAsync(long chatId, SendChatActionRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Получить закрепленное сообщение в групповом чате
+    /// </summary>
+    /// <param name="chatId">Идентификатор чата</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Ответ с закрепленным сообщением</returns>
+    Task<GetChatPinnedMessageResponse> GetChatPinnedMessageAsync(long chatId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Закрепить сообщение в групповом чате
+    /// </summary>
+    /// <param name="chatId">Идентификатор чата</param>
+    /// <param name="request">Запрос на закрепление сообщения</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Базовый ответ операции</returns>
+    Task<BaseResponse> PinChatMessageAsync(long chatId, PinChatMessageRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Удалить закрепленное сообщение в групповом чате
+    /// </summary>
+    /// <param name="chatId">Идентификатор чата</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Базовый ответ операции</returns>
+    Task<BaseResponse> UnpinChatMessageAsync(long chatId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Получить информацию о членстве текущего бота в групповом чате
+    /// </summary>
+    /// <param name="chatId">Идентификатор чата</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Информация о членстве текущего бота в чате</returns>
+    Task<ChatMember> GetChatMembershipAsync(long chatId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Удалить текущего бота из группового чата
+    /// </summary>
+    /// <param name="chatId">Идентификатор чата</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Базовый ответ операции</returns>
+    Task<BaseResponse> LeaveChatAsync(long chatId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Получить список администраторов группового чата
+    /// </summary>
+    /// <param name="chatId">Идентификатор чата</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Ответ со списком администраторов чата</returns>
+    Task<GetChatMembersResponse> GetChatAdminsAsync(long chatId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Назначить администраторов группового чата
+    /// </summary>
+    /// <param name="chatId">Идентификатор чата</param>
+    /// <param name="request">Запрос на назначение администраторов</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Базовый ответ операции</returns>
+    Task<BaseResponse> AddChatAdminsAsync(long chatId, AddChatAdminsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Отменить права администратора в групповом чате
+    /// </summary>
+    /// <param name="chatId">Идентификатор чата</param>
+    /// <param name="userId">Идентификатор пользователя</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Базовый ответ операции</returns>
+    Task<BaseResponse> RemoveChatAdminAsync(long chatId, long userId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Получить участников чата

@@ -22,7 +22,7 @@ dotnet add package SaaSoft.MAX.Bot
 
 ### Через PackageReference
 ```xml
-<PackageReference Include="SaaSoft.MAX.Bot" Version="1.0.8" />
+<PackageReference Include="SaaSoft.MAX.Bot" Version="1.1.0" />
 ```
 
 ## Быстрый старт
@@ -141,7 +141,7 @@ public class BotService
 | DEL | Удалить сообщение | `DELETE/messages` | ✅ |
 | GET | Получить сообщение | `GET/messages/-messageId-` | ✅ |
 | GET | Получить информацию о видео | `GET/videos/-videoToken-` | ✅ |
-| POST | Ответ на callback | `POST/answers` | ❌ |
+| POST | Ответ на callback | `POST/answers` | ✅ |
 
 
 #### 💬 Chats
@@ -149,18 +149,18 @@ public class BotService
 | Метод | Описание | Ссылка | Статус |
 |-------|----------|--------|--------|
 | GET | Получение списка всех групповых чатов | `GET/chats` | ✅ |
-| GET | Получение информации о групповом чате | `GET/chats/-chatId-` | ❌ |
-| PATCH | Изменение информации о групповом чате | `PATCH/chats/-chatId-` | ❌ |
-| DEL | Удаление группового чата | `DELETE/chats/-chatId-` | ❌ |
-| POST | Отправка действия бота в групповой чат | `POST/chats/-chatId-/actions` | ❌ |
-| GET | Получение закреплённого сообщения в групповом чате | `GET/chats/-chatId-/pin` | ❌ |
-| PUT | Закрепление сообщения в групповом чате | `PUT/chats/-chatId-/pin` | ❌ |
-| DEL | Удаление закреплённого сообщения в групповом чате | `DELETE/chats/-chatId-/pin` | ❌ |
-| GET | Получение информации о членстве бота в групповом чате | `GET/chats/-chatId-/members/me` | ❌ |
-| DEL | Удаление бота из группового чата | `DELETE/chats/-chatId-/members/me` | ❌ |
-| GET | Получение списка администраторов группового чата | `GET/chats/-chatId-/members/admins` | ❌ |
-| POST | Назначить администратора группового чата | `POST/chats/-chatId-/members/admins` | ❌ |
-| DEL | Отменить права администратора в групповом чате | `DELETE/chats/-chatId-/members/admins/-userId-` | ❌ |
+| GET | Получение информации о групповом чате | `GET/chats/-chatId-` | ✅ |
+| PATCH | Изменение информации о групповом чате | `PATCH/chats/-chatId-` | ✅ |
+| DEL | Удаление группового чата | `DELETE/chats/-chatId-` | ✅ |
+| POST | Отправка действия бота в групповой чат | `POST/chats/-chatId-/actions` | ✅ |
+| GET | Получение закреплённого сообщения в групповом чате | `GET/chats/-chatId-/pin` | ✅ |
+| PUT | Закрепление сообщения в групповом чате | `PUT/chats/-chatId-/pin` | ✅ |
+| DEL | Удаление закреплённого сообщения в групповом чате | `DELETE/chats/-chatId-/pin` | ✅ |
+| GET | Получение информации о членстве бота в групповом чате | `GET/chats/-chatId-/members/me` | ✅ |
+| DEL | Удаление бота из группового чата | `DELETE/chats/-chatId-/members/me` | ✅ |
+| GET | Получение списка администраторов группового чата | `GET/chats/-chatId-/members/admins` | ✅ |
+| POST | Назначить администратора группового чата | `POST/chats/-chatId-/members/admins` | ✅ |
+| DEL | Отменить права администратора в групповом чате | `DELETE/chats/-chatId-/members/admins/-userId-` | ✅ |
 | GET | Получение участников группового чата | `GET/chats/-chatId-/members` | ✅ |
 | POST | Добавление участников в групповой чат | `POST/chats/-chatId-/members` | ✅ |
 | DEL | Удаление участника из группового чата | `DELETE/chats/-chatId-/members` | ✅ |
@@ -169,9 +169,9 @@ public class BotService
 
 | Метод | Описание | Ссылка | Статус |
 |-------|----------|--------|--------|
-| GET | Получение подписок | `GET/subscriptions` | ❌ |
+| GET | Получение подписок | `GET/subscriptions` | ✅ |
 | POST | Подписка на обновления | `POST/subscriptions` | ✅ |
-| DEL | Отписка от обновлений | `DELETE/subscriptions` | ❌ |
+| DEL | Отписка от обновлений | `DELETE/subscriptions` | ✅ |
 | GET | Получение обновлений | `GET/updates` | ✅ |
 
 #### 📁 Upload

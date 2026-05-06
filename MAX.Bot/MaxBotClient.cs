@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Web;
 using System.Net.Http.Headers;
@@ -49,7 +50,7 @@ public class MaxBotClient : IMaxBotClient
         var requestUri = new Uri(_httpClient.BaseAddress!, endpoint);
         var request = new HttpRequestMessage(method, requestUri);
 
-        if (data != null && (method == HttpMethod.Post || method == HttpMethod.Put))
+        if (data != null && (method == HttpMethod.Post || method == HttpMethod.Put || method == HttpMethod.Patch))
         {
             var json = JsonSerializer.Serialize(data, new JsonSerializerOptions
             {
@@ -100,6 +101,20 @@ public class MaxBotClient : IMaxBotClient
 
         return await SendRequestAsync<SendMessageResponse>(
             HttpMethod.Post, $"/messages{queryString}", request, cancellationToken);
+    }
+
+    public async Task<BaseResponse> AnswerCallbackAsync(
+        AnswerCallbackRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        request.Validate();
+
+        return await SendRequestAsync<BaseResponse>(
+            HttpMethod.Post,
+            $"/answers?callback_id={HttpUtility.UrlEncode(request.CallbackId)}",
+            request,
+            cancellationToken);
     }
 
     public async Task<GetMessagesResponse> GetMessagesAsync(GetMessagesRequest request, CancellationToken cancellationToken = default)
@@ -176,6 +191,151 @@ public class MaxBotClient : IMaxBotClient
             : "";
 
         return await SendRequestAsync<GetChatsResponse>(HttpMethod.Get, $"/chats{queryString}", null, cancellationToken);
+    }
+
+    public async Task<Chat> GetChatByIdAsync(long chatId, CancellationToken cancellationToken = default)
+    {
+        return await SendRequestAsync<Chat>(
+            HttpMethod.Get,
+            $"/chats/{chatId.ToString(CultureInfo.InvariantCulture)}",
+            null,
+            cancellationToken);
+    }
+
+    public async Task<Chat> UpdateChatAsync(long chatId, UpdateChatRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        request.Validate();
+
+        return await SendRequestAsync<Chat>(
+            HttpMethod.Patch,
+            $"/chats/{chatId.ToString(CultureInfo.InvariantCulture)}",
+            request,
+            cancellationToken);
+    }
+
+    public async Task<BaseResponse> DeleteChatAsync(long chatId, CancellationToken cancellationToken = default)
+    {
+        return await SendRequestAsync<BaseResponse>(
+            HttpMethod.Delete,
+            $"/chats/{chatId.ToString(CultureInfo.InvariantCulture)}",
+            null,
+            cancellationToken);
+    }
+
+    public async Task<BaseResponse> SendChatActionAsync(
+        long chatId,
+        SendChatActionRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        request.Validate();
+
+        return await SendRequestAsync<BaseResponse>(
+            HttpMethod.Post,
+            $"/chats/{chatId.ToString(CultureInfo.InvariantCulture)}/actions",
+            request,
+            cancellationToken);
+    }
+
+    public async Task<GetChatPinnedMessageResponse> GetChatPinnedMessageAsync(
+        long chatId,
+        CancellationToken cancellationToken = default)
+    {
+        return await SendRequestAsync<GetChatPinnedMessageResponse>(
+            HttpMethod.Get,
+            $"/chats/{chatId.ToString(CultureInfo.InvariantCulture)}/pin",
+            null,
+            cancellationToken);
+    }
+
+    public async Task<BaseResponse> PinChatMessageAsync(
+        long chatId,
+        PinChatMessageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        request.Validate();
+
+        return await SendRequestAsync<BaseResponse>(
+            HttpMethod.Put,
+            $"/chats/{chatId.ToString(CultureInfo.InvariantCulture)}/pin",
+            request,
+            cancellationToken);
+    }
+
+    public async Task<BaseResponse> UnpinChatMessageAsync(
+        long chatId,
+        CancellationToken cancellationToken = default)
+    {
+        return await SendRequestAsync<BaseResponse>(
+            HttpMethod.Delete,
+            $"/chats/{chatId.ToString(CultureInfo.InvariantCulture)}/pin",
+            null,
+            cancellationToken);
+    }
+
+    public async Task<ChatMember> GetChatMembershipAsync(
+        long chatId,
+        CancellationToken cancellationToken = default)
+    {
+        return await SendRequestAsync<ChatMember>(
+            HttpMethod.Get,
+            $"/chats/{chatId.ToString(CultureInfo.InvariantCulture)}/members/me",
+            null,
+            cancellationToken);
+    }
+
+    public async Task<BaseResponse> LeaveChatAsync(
+        long chatId,
+        CancellationToken cancellationToken = default)
+    {
+        return await SendRequestAsync<BaseResponse>(
+            HttpMethod.Delete,
+            $"/chats/{chatId.ToString(CultureInfo.InvariantCulture)}/members/me",
+            null,
+            cancellationToken);
+    }
+
+    public async Task<GetChatMembersResponse> GetChatAdminsAsync(
+        long chatId,
+        CancellationToken cancellationToken = default)
+    {
+        return await SendRequestAsync<GetChatMembersResponse>(
+            HttpMethod.Get,
+            $"/chats/{chatId.ToString(CultureInfo.InvariantCulture)}/members/admins",
+            null,
+            cancellationToken);
+    }
+
+    public async Task<BaseResponse> AddChatAdminsAsync(
+        long chatId,
+        AddChatAdminsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        request.Validate();
+
+        return await SendRequestAsync<BaseResponse>(
+            HttpMethod.Post,
+            $"/chats/{chatId.ToString(CultureInfo.InvariantCulture)}/members/admins",
+            request,
+            cancellationToken);
+    }
+
+    public async Task<BaseResponse> RemoveChatAdminAsync(
+        long chatId,
+        long userId,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId <= 0)
+            throw new ArgumentException("ID пользователя должен быть положительным числом.", nameof(userId));
+
+        return await SendRequestAsync<BaseResponse>(
+            HttpMethod.Delete,
+            $"/chats/{chatId.ToString(CultureInfo.InvariantCulture)}/members/admins/{userId.ToString(CultureInfo.InvariantCulture)}",
+            null,
+            cancellationToken);
     }
 
     public async Task<GetChatMembersResponse> GetChatMembersAsync(GetChatMembersRequest request, CancellationToken cancellationToken = default)
@@ -284,6 +444,15 @@ public class MaxBotClient : IMaxBotClient
             cancellationToken);
     }
 
+    public async Task<GetSubscriptionsResponse> GetSubscriptionsAsync(CancellationToken cancellationToken = default)
+    {
+        return await SendRequestAsync<GetSubscriptionsResponse>(
+            HttpMethod.Get,
+            "/subscriptions",
+            null,
+            cancellationToken);
+    }
+
     public async Task<BaseResponse> SubscribeAsync(
         SubscriptionRequest request,
         CancellationToken cancellationToken = default)
@@ -295,6 +464,20 @@ public class MaxBotClient : IMaxBotClient
             HttpMethod.Post,
             "/subscriptions",
             request,
+            cancellationToken);
+    }
+
+    public async Task<BaseResponse> UnsubscribeAsync(
+        DeleteSubscriptionRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        request.Validate();
+
+        return await SendRequestAsync<BaseResponse>(
+            HttpMethod.Delete,
+            $"/subscriptions?url={HttpUtility.UrlEncode(request.Url)}",
+            null,
             cancellationToken);
     }
 
