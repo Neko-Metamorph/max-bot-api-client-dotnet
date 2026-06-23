@@ -54,7 +54,7 @@ await botClient.SendMessageAsync(new SendMessageRequest
 });
 
 // Получение обновлений
-var _ = maxApiClient.PollUpdatesWithCallback(
+var _ = botClient.PollUpdatesWithCallback(
     async (update, client) =>
     {
         if (update is MessageCreatedUpdate messageCreated)
